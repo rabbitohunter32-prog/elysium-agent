@@ -7,10 +7,12 @@ import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 import { agentRouter } from "./agentRouter";
 import { fileUploadRouter } from "./fileUploadRouter";
+import { googleRouter } from "./googleRouter";
 
 export const appRouter = router({
   system: systemRouter,
   fileUpload: fileUploadRouter,
+  google: googleRouter,
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),

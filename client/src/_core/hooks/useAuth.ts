@@ -8,14 +8,32 @@ type UseAuthOptions = {
   redirectPath?: string;
 };
 
+type DemoUser = {
+  id: number;
+  openId: string;
+  name: string;
+  email: string;
+  role: "user" | "admin";
+  loginMethod: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  lastSignedIn?: string | Date;
+};
+
 export function useAuth(options?: UseAuthOptions) {
   const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl() } =
     options ?? {};
   const utils = trpc.useUtils();
 
-  const meQuery = trpc.auth.me.useQuery(undefined, {
+  // Check for demo mode
+  const isDemoMode = typeof window !== "undefined" && localStorage.getItem("demo_mode") === "true";
+  const demoUserData = isDemoMode ? localStorage.getItem("demo_user") : null;
+  const demoUser: DemoUser | null = demoUserData ? JSON.parse(demoUserData) : null;
+
+  const meQuery = trpc.auth.me.useQuery(isDemoMode ? undefined : undefined, {
     retry: false,
     refetchOnWindowFocus: false,
+    enabled: !isDemoMode,
   });
 
   const logoutMutation = trpc.auth.logout.useMutation({
@@ -25,6 +43,14 @@ export function useAuth(options?: UseAuthOptions) {
   });
 
   const logout = useCallback(async () => {
+    if (isDemoMode) {
+      localStorage.removeItem("demo_mode");
+      localStorage.removeItem("demo_user");
+      localStorage.removeItem("manus-runtime-user-info");
+      window.location.href = "/auth";
+      return;
+    }
+
     try {
       await logoutMutation.mutateAsync();
     } catch (error: unknown) {
@@ -39,9 +65,18 @@ export function useAuth(options?: UseAuthOptions) {
       utils.auth.me.setData(undefined, null);
       await utils.auth.me.invalidate();
     }
-  }, [logoutMutation, utils]);
+  }, [logoutMutation, utils, isDemoMode]);
 
   const state = useMemo(() => {
+    if (isDemoMode && demoUser) {
+      return {
+        user: demoUser,
+        loading: false,
+        error: null,
+        isAuthenticated: true,
+      };
+    }
+
     localStorage.setItem(
       "manus-runtime-user-info",
       JSON.stringify(meQuery.data)
@@ -58,10 +93,13 @@ export function useAuth(options?: UseAuthOptions) {
     meQuery.isLoading,
     logoutMutation.error,
     logoutMutation.isPending,
+    isDemoMode,
+    demoUser,
   ]);
 
   useEffect(() => {
     if (!redirectOnUnauthenticated) return;
+    if (isDemoMode) return;
     if (meQuery.isLoading || logoutMutation.isPending) return;
     if (state.user) return;
     if (typeof window === "undefined") return;
@@ -74,11 +112,12 @@ export function useAuth(options?: UseAuthOptions) {
     logoutMutation.isPending,
     meQuery.isLoading,
     state.user,
+    isDemoMode,
   ]);
 
   return {
     ...state,
-    refresh: () => meQuery.refetch(),
+    refresh: () => isDemoMode ? Promise.resolve() : meQuery.refetch(),
     logout,
   };
 }
