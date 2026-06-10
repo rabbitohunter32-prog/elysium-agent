@@ -149,7 +149,8 @@ export const appRouter = router({
         }
 
         const steps = await db.getTaskSteps(input.id);
-        return { task, steps };
+        const conversation = await db.getConversationByTaskId(input.id);
+        return { task, steps, conversationId: conversation?.id };
       }),
 
     updateStatus: protectedProcedure
@@ -265,6 +266,61 @@ export const appRouter = router({
         }
 
         return db.getTaskDocuments(input.taskId);
+      }),
+
+    upload: protectedProcedure
+      .input(z.object({
+        filename: z.string().min(1, "Filename is required"),
+        fileType: z.string().min(1, "File type is required"),
+        fileSize: z.number().min(1, "File size must be greater than 0"),
+        storageUrl: z.string().min(1, "Storage URL is required"),
+        storageKey: z.string().min(1, "Storage key is required"),
+        taskId: z.number().optional(),
+        description: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // If taskId is provided, verify ownership
+        if (input.taskId) {
+          const task = await db.getTaskById(input.taskId);
+          if (!task || task.userId !== ctx.user.id) {
+            throw new Error("Task not found or access denied");
+          }
+        }
+
+        const document = await db.createDocument(
+          ctx.user.id,
+          input.filename,
+          input.fileType,
+          input.fileSize,
+          input.storageKey,
+          input.storageUrl,
+          "uploaded",
+          input.taskId,
+          input.description
+        );
+
+        if (!document) {
+          throw new Error("Failed to upload document");
+        }
+
+        return document;
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify document ownership
+        const doc = await db.getDocumentById(input.id);
+        if (!doc || doc.userId !== ctx.user.id) {
+          throw new Error("Document not found or access denied");
+        }
+
+        const success = await db.deleteDocument(input.id);
+        if (!success) {
+          throw new Error("Failed to delete document");
+        }
+
+        return { success: true };
       }),
   }),
 

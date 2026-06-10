@@ -185,6 +185,24 @@ export async function getUserConversations(userId: number): Promise<Conversation
   }
 }
 
+export async function getConversationByTaskId(taskId: number): Promise<Conversation | null> {
+  try {
+    const db = await getDb();
+    if (!db) return null;
+
+    const result = await db
+      .select()
+      .from(conversations)
+      .where(eq(conversations.taskId, taskId))
+      .limit(1);
+
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Failed to get conversation by task ID:", error);
+    return null;
+  }
+}
+
 // Message queries
 export async function createMessage(
   conversationId: number,
@@ -508,6 +526,37 @@ export async function getTaskDocuments(taskId: number): Promise<Document[]> {
   } catch (error) {
     console.error("[Database] Failed to get task documents:", error);
     return [];
+  }
+}
+
+export async function getDocumentById(id: number): Promise<Document | null> {
+  try {
+    const db = await getDb();
+    if (!db) return null;
+
+    const result = await db
+      .select()
+      .from(documents)
+      .where(eq(documents.id, id))
+      .limit(1);
+
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Failed to get document:", error);
+    return null;
+  }
+}
+
+export async function deleteDocument(id: number): Promise<boolean> {
+  try {
+    const db = await getDb();
+    if (!db) return false;
+
+    await db.delete(documents).where(eq(documents.id, id));
+    return true;
+  } catch (error) {
+    console.error("[Database] Failed to delete document:", error);
+    return false;
   }
 }
 

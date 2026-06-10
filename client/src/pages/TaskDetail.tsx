@@ -19,15 +19,36 @@ function TaskDetailContent({ id }: RouteParams) {
   const taskId = parseInt(id);
   const [userMessage, setUserMessage] = useState("");
   const [isExecuting, setIsExecuting] = useState(false);
+  const [conversationId, setConversationId] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Queries and mutations
   const { data: taskData, isLoading: taskLoading, refetch: refetchTask } = trpc.tasks.get.useQuery({ id: taskId });
-  const conversationId = taskData?.steps?.[0]?.taskId ? taskId : 0; // Get from task relationship
-  const { data: messages, refetch: refetchMessages } = trpc.messages.list.useQuery({ conversationId }, { enabled: !!conversationId });
+  const { data: messages, refetch: refetchMessages } = trpc.messages.list.useQuery(
+    { conversationId: conversationId || 0 },
+    { enabled: !!conversationId, refetchInterval: 2000 } // Poll every 2 seconds
+  );
   const createMessageMutation = trpc.messages.create.useMutation();
   const executeMutation = trpc.agent.executeTask.useMutation();
   const planMutation = trpc.agent.planExecution.useMutation();
+
+  // Set conversation ID from task data
+  useEffect(() => {
+    if (taskData?.conversationId && !conversationId) {
+      setConversationId(taskData.conversationId);
+    }
+  }, [taskData?.conversationId, conversationId]);
+
+  // Poll task status
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (taskData?.task?.status === "running") {
+        void refetchTask();
+      }
+    }, 3000); // Poll every 3 seconds during execution
+
+    return () => clearInterval(interval);
+  }, [taskData?.task?.status, refetchTask]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -41,6 +62,7 @@ function TaskDetailContent({ id }: RouteParams) {
     e.preventDefault();
 
     if (!userMessage.trim() || !conversationId) {
+      toast.error("Conversation not ready");
       return;
     }
 
@@ -52,7 +74,7 @@ function TaskDetailContent({ id }: RouteParams) {
       });
 
       setUserMessage("");
-      refetchMessages();
+      await refetchMessages();
     } catch (error) {
       toast.error("Failed to send message");
       console.error(error);
@@ -60,10 +82,15 @@ function TaskDetailContent({ id }: RouteParams) {
   };
 
   const handlePlanTask = async () => {
+    if (!conversationId) {
+      toast.error("Conversation not ready");
+      return;
+    }
+
     try {
       await planMutation.mutateAsync({ taskId });
       toast.success("Task plan created!");
-      refetchTask();
+      await refetchTask();
     } catch (error) {
       toast.error("Failed to create task plan");
       console.error(error);
@@ -71,26 +98,32 @@ function TaskDetailContent({ id }: RouteParams) {
   };
 
   const handleExecuteTask = async () => {
+    if (!conversationId) {
+      toast.error("Conversation not ready");
+      return;
+    }
+
     setIsExecuting(true);
     try {
       await executeMutation.mutateAsync({
         taskId,
         conversationId,
       });
-      toast.success("Task execution completed!");
-      refetchTask();
-      refetchMessages();
+      toast.success("Task execution started!");
+      await refetchTask();
+      await refetchMessages();
     } catch (error) {
       toast.error("Task execution failed");
       console.error(error);
     } finally {
       setIsExecuting(false);
     }
-  };
+  }
 
   const handleCancelTask = async () => {
     try {
-      await trpc.agent.cancelTask.useMutation().mutateAsync({ taskId });
+      const cancelMutation = trpc.agent.cancelTask.useMutation();
+      await cancelMutation.mutateAsync({ taskId });
       toast.success("Task cancelled");
       refetchTask();
     } catch (error) {

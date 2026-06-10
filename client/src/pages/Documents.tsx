@@ -6,10 +6,13 @@ import { trpc } from "@/lib/trpc";
 import { FileText, Download, Trash2, Search, Loader2, Upload, Calendar } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { FileUploadDialog } from "@/components/FileUploadDialog";
 
 function DocumentsContent() {
-  const { data: documents, isLoading } = trpc.documents.list.useQuery();
+  const { data: documents, isLoading, refetch } = trpc.documents.list.useQuery();
   const [searchQuery, setSearchQuery] = useState("");
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const deleteMutation = trpc.documents.delete.useMutation();
 
   const filteredDocuments = documents?.filter(doc =>
     doc.filename?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -23,6 +26,16 @@ function DocumentsContent() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteMutation.mutateAsync({ id });
+      toast.success("Document deleted");
+      refetch();
+    } catch (error) {
+      toast.error("Failed to delete document");
+    }
   };
 
   const getFileIcon = (fileType?: string) => {
@@ -41,7 +54,13 @@ function DocumentsContent() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <FileUploadDialog
+        open={uploadDialogOpen}
+        onOpenChange={setUploadDialogOpen}
+        onUploadSuccess={() => refetch()}
+      />
+      <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container py-6">
@@ -69,7 +88,11 @@ function DocumentsContent() {
                 className="pl-10 border-border/50"
               />
             </div>
-            <Button variant="outline" className="gap-2">
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => setUploadDialogOpen(true)}
+            >
               <Upload className="w-4 h-4" />
               Upload File
             </Button>
@@ -130,7 +153,8 @@ function DocumentsContent() {
                           size="sm"
                           variant="ghost"
                           className="text-destructive hover:text-destructive"
-                          onClick={() => toast.info("Delete functionality coming soon")}
+                          onClick={() => handleDelete(doc.id)}
+                          disabled={deleteMutation.isPending}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -202,6 +226,7 @@ function DocumentsContent() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
