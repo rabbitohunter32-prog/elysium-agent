@@ -19,14 +19,14 @@
 - [ ] Display file metadata in messages
 - [x] Link uploaded files to tasks
 - [x] Create file attachment UI component
-- [ ] Test chat file uploads end-to-end
+- [x] Test chat file uploads end-to-end
 
 ### File Download & Retrieval
-- [ ] Implement secure file download endpoint
-- [ ] Add file access control (ownership verification)
+- [x] Implement secure file download endpoint
+- [x] Add file access control (ownership verification)
 - [ ] Implement file expiration/cleanup
 - [ ] Add download history tracking
-- [ ] Test concurrent downloads
+- [x] Test concurrent downloads
 - [ ] Implement bandwidth throttling
 - [ ] Add file integrity verification
 
