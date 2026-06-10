@@ -8,6 +8,11 @@ import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import {
+  handleTaskCompletionNotification,
+  handleNewUserNotification,
+  handleTaskFailureAlert,
+} from "../scheduledHandlers";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -36,6 +41,12 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
   registerOAuthRoutes(app);
+
+  // Scheduled task handlers
+  app.post("/api/scheduled/task-completion", handleTaskCompletionNotification);
+  app.post("/api/scheduled/new-users", handleNewUserNotification);
+  app.post("/api/scheduled/task-failures", handleTaskFailureAlert);
+
   // tRPC API
   app.use(
     "/api/trpc",
