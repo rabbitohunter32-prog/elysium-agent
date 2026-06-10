@@ -12,7 +12,6 @@ export default function DemoLogin() {
   const handleDemoLogin = async (role: "user" | "admin") => {
     setIsLoading(true);
     try {
-      // Store demo user in localStorage
       const demoUser = {
         id: role === "admin" ? 2 : 1,
         openId: role === "admin" ? "demo-admin-1" : "demo-user-1",
@@ -20,13 +19,16 @@ export default function DemoLogin() {
         email: role === "admin" ? "admin@elysium.local" : "demo@elysium.local",
         role: role,
         loginMethod: "demo",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        lastSignedIn: new Date().toISOString(),
       };
 
-      localStorage.setItem("demo_user", JSON.stringify(demoUser));
+      localStorage.setItem("manus-runtime-user-info", JSON.stringify(demoUser));
       localStorage.setItem("demo_mode", "true");
 
-      // Redirect to dashboard
-      setLocation("/");
+      await new Promise(resolve => setTimeout(resolve, 100));
+      setLocation("/dashboard");
     } finally {
       setIsLoading(false);
     }
@@ -35,7 +37,6 @@ export default function DemoLogin() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -46,7 +47,6 @@ export default function DemoLogin() {
           <p className="text-slate-400 text-sm">Autonomous AI Agent Platform</p>
         </div>
 
-        {/* Demo Mode Card */}
         <Card className="bg-slate-800 border-slate-700 p-8 mb-6">
           <div className="text-center mb-6">
             <div className="inline-block bg-amber-500/20 border border-amber-500/50 rounded-lg px-4 py-2 mb-4">
@@ -60,9 +60,7 @@ export default function DemoLogin() {
             </p>
           </div>
 
-          {/* Role Selection */}
           <div className="space-y-3 mb-6">
-            {/* User Role */}
             <button
               onClick={() => setSelectedRole("user")}
               className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
@@ -92,7 +90,6 @@ export default function DemoLogin() {
               </div>
             </button>
 
-            {/* Admin Role */}
             <button
               onClick={() => setSelectedRole("admin")}
               className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
@@ -123,7 +120,6 @@ export default function DemoLogin() {
             </button>
           </div>
 
-          {/* Login Button */}
           <Button
             onClick={() => handleDemoLogin(selectedRole)}
             disabled={isLoading}
@@ -133,7 +129,6 @@ export default function DemoLogin() {
           </Button>
         </Card>
 
-        {/* Features List */}
         <Card className="bg-slate-800/50 border-slate-700 p-6">
           <h3 className="text-white font-semibold mb-4">What You Can Try:</h3>
           <ul className="space-y-2 text-sm text-slate-400">
@@ -156,7 +151,6 @@ export default function DemoLogin() {
           </ul>
         </Card>
 
-        {/* Footer */}
         <p className="text-center text-xs text-slate-500 mt-6">
           Demo data is not persistent. Refresh to reset.
         </p>
