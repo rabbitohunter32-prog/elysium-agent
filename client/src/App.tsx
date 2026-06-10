@@ -5,6 +5,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Auth from "./pages/Auth";
+import DemoLogin from "./pages/DemoLogin";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
 import TaskCreate from "./pages/TaskCreate";
@@ -16,6 +17,7 @@ function Router() {
   return (
     <Switch>
       <Route path={"/auth"} component={Auth} />
+      <Route path={"/demo-login"} component={DemoLogin} />
       <Route path={"/dashboard"} component={Dashboard} />
       <Route path={"/task-create"} component={TaskCreate} />
       <Route path={"/tasks/:id"} component={TaskDetail} />

@@ -107,9 +107,9 @@ export default function Auth() {
             <div className="flex items-center justify-center">
               <Card className="w-full border-border/50 shadow-lg">
                 <CardHeader className="space-y-2">
-                  <CardTitle className="text-2xl">Welcome Back</CardTitle>
+                  <CardTitle className="text-2xl">Get Started</CardTitle>
                   <CardDescription>
-                    Sign in with your Manus account to get started
+                    Sign in or try our free demo mode
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -123,21 +123,20 @@ export default function Auth() {
                         Sign In with Manus
                       </a>
                     </Button>
-                  </div>
-
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-border/50" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-card px-2 text-muted-foreground">
-                        New to Elysium?
-                      </span>
-                    </div>
+                    <Button
+                      asChild
+                      size="lg"
+                      variant="outline"
+                      className="w-full"
+                    >
+                      <a href="/demo-login">
+                        🎉 Try Demo Mode (Free)
+                      </a>
+                    </Button>
                   </div>
 
                   <p className="text-sm text-muted-foreground text-center">
-                    Sign in to create an account and start using the platform
+                    No Manus account? Try our free demo mode to explore all features!
                   </p>
                 </CardContent>
               </Card>
