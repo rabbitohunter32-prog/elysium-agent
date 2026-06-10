@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Send, Play, Square, Zap, CheckCircle2, AlertCircle, Clock } from "lucide-react";
 import { Streamdown } from "streamdown";
+import { ChatFileUpload } from "@/components/ChatFileUpload";
 
 interface RouteParams {
   id: string;
@@ -289,6 +290,7 @@ function TaskDetailContent({ id }: RouteParams) {
                 disabled={createMessageMutation.isPending || !conversationId}
                 className="border-border/50"
               />
+              <ChatFileUpload taskId={taskId} onFileUploaded={() => void refetchMessages()} />
               <Button
                 type="submit"
                 disabled={createMessageMutation.isPending || !userMessage.trim()}

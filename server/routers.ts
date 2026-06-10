@@ -6,9 +6,11 @@ import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 import { agentRouter } from "./agentRouter";
+import { fileUploadRouter } from "./fileUploadRouter";
 
 export const appRouter = router({
   system: systemRouter,
+  fileUpload: fileUploadRouter,
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
